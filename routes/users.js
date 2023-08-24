@@ -8,7 +8,7 @@ const router = ex.Router()
 router.get('/', (req, res) => {
     res.status(200).json({
         success: true,
-        data: users
+        data: req.filteredUsers ? req.filteredUsers : users
     })
 })
 
