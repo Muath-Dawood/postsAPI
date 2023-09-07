@@ -4337,7 +4337,7 @@ const comments = [
     }
 ]
 
-const crypto = require('crypto')
+/* const crypto = require('crypto')
 
 const newUsers = users.map(user => {
   user.id = crypto.randomUUID()
@@ -4356,6 +4356,6 @@ const newComments = comments.map((comment, commentIndex) => {
   let postIndex = Math.floor(commentIndex/5)
   comment.postId = posts[postIndex].id
   return comment
-})
+}) */
 
-module.exports = { newUsers, newPosts, newComments }
+module.exports = { users, posts, comments }
