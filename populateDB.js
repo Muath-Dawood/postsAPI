@@ -44,6 +44,22 @@ async function main() {
                     })
                     await newPost.save()
                     console.log(`Post: ${newPost._id} created successfuly by User ${newUser._id}`)
+                    
+                    for(let k = j * 5; k < j*5 + 5; k++) {
+                        try {
+                            let newComment = new Comment({
+                                postId: newPost._id,
+                                email: comments[k].email,
+                                name: comments[k].name,
+                                body: comments[k].body
+                            })
+                            await newComment.save()
+                            console.log(`Comment: ${newComment._id} was added to Post: ${newPost._id} successfuly`)
+                        }catch(e) {
+                            console.error(e.message)
+                        }
+                    }
+                    
                 }catch(e) {
                     console.error(e.message)
                 }

@@ -1,6 +1,6 @@
 const ex = require('express')
-const crypto = require('crypto')
-let { newUsers: users, newPosts: posts } = require('../data')
+const User = require('../models/User')
+const Post = require('../models/Post')
 
 const router = ex.Router()
 
@@ -8,19 +8,25 @@ const router = ex.Router()
 router.get('/', (req, res) => {
     res.status(200).json({
         success: true,
-        data: req.filteredUsers ? req.filteredUsers : users
+        data: req.users
     })
 })
 
 //create new user
-router.post('/', (req, res) => {
-    const newUser = req.body
-    newUser.id = crypto.randomUUID()
-    users.push(newUser)
-    res.status(201).json({
-        success: true,
-        data: newUser
-    })
+router.post('/', async (req, res) => {
+    const newUser = new User(req.body)
+    try{
+        await newUser.save()
+        res.status(201).json({
+            success: true,
+            data: newUser
+        })
+    }catch(e) {
+        res.status(500).json({
+            success: false,
+            message: e.message
+        })  
+    }
 })
 
 //get single user route
@@ -32,60 +38,76 @@ router.get('/:id', (req, res) => {
 })
 
 //edit a single user route
-router.put('/:id', (req, res) => {
-    if(Object.keys(req.body).length) {
-        for(let key in req.body) {
-            req.user[key] = req.body[key]
-        }
+router.put('/:id', async (req, res) => {
+    try {
+        await User.updateOne({_id: req.user._id}, req.query)
         res.status(200).json({
             success: true,
-            message: `user ${req.user.id} updated successfuly`
+            data: User.findOne({_id: req.user._id})  
         })
-    }else {
-        res.status(400).json({
+    }catch(e) {
+        res.status(500).json({
             success: false,
-            message: 'no data was provided'
+            message: e.message
         })
     }
 })
 
 //delete a sigle user route
-router.delete('/:id', (req, res) => {
-    users = users.filter(user => user.id !== req.user.id)
-    posts = posts.filter(post => post.userId !== req.user.id)
-    res.status(200).json({
-        success: true,
-        message: `user ${req.user.id} and posts deleted successfuly`
-    })
+router.delete('/:id', async (req, res) => {
+    try {
+        await User.deleteOne({_id: req.user._id})
+        await Post.deleteMany({userId: req.user._id})
+        res.status(200).json({
+            success: true,
+            message: `user ${req.user._id} and posts deleted successfuly`
+        })
+    }catch(e) {
+        res.status(500).json({
+            success: false,
+            message: e.message
+        })
+    }
 })
 
 //get all posts of a user route
-router.get('/:id/posts', (req, res) => {
-    const userPosts = posts.filter(post => post.userId === req.user.id)
-    if(userPosts.length) {
-        res.status(200).json({
-            success: true,
-            data: userPosts
-        })
-    }else {
+router.get('/:id/posts', async (req, res) => {
+    try {
+        const userPosts = await Post.find({userId: req.user._id})
+        if(userPosts.length) {
+            res.status(200).json({
+                success: true,
+                data: userPosts
+            })
+        }else {
+            res.status(404).json({
+                success: false,
+                message: `User ${req.user.id} has no posts yet`
+            })
+        }
+    }catch(e) {
         res.status(404).json({
             success: false,
-            message: `user ${req.user.id} has no posts yet`
+            message: `user ${req.user.id} not found`
         })
     }
 })
 
 //add a post by a user
 router.post('/:id/posts', (req, res) => {
-    const newPost = req.body
-    newPost.id = crypto.randomUUID()
-    newPost.userId = req.user.id
-    posts.push(newPost)
-
-    res.status(201).json({
-        success: true,
-        message: `post ${newPost.id} added successfuly by user ${req.user.id}`
-    })
+    const newPost = new Post({...req.body, userId: req.user._id})
+    try {
+        newPost.save()
+        res.status(201).json({
+            success: true,
+            data: newPost
+        })
+    }catch(e) {
+        res.status(500).json({
+            success: false,
+            message: e.message
+        })
+    }
 })
 
 

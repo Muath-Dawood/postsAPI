@@ -1,18 +1,19 @@
-const { newUsers: users, newPosts: posts } = require('../data')
+const User = require('../models/User')
+const Post = require('../models/Post')
 
 const requestLogger = (req, res, next) => {
     console.log(req.method, req.url)
     next()
 }
 
-const getUser = (req, res, next) => {
+const getUser = async (req, res, next) => {
     const userId = req.params.id
-    const user = users.find(user => user.id === userId)
-    if(user) {
+    try {
+        const user = await User.findById(userId)
         req.user = user
-        console.log("user has been added to the request")
         next()
-    }else {
+    }catch(e) {
+        console.error(e.message)
         res.status(404).json({
             success: false,
             message: `user ${req.params.id} not found`
@@ -20,17 +21,16 @@ const getUser = (req, res, next) => {
     }
 }
 
-const getPost = (req, res, next) => {
+const getPost = async (req, res, next) => {
     const postId = req.params.id
-    const post = posts.find(post => post.id === postId)
-    if(post) {
+    try {
+        const post = await Post.find(postId)
         req.post = post
-        console.log("post has been added to the request")
-        next()
-    }else {
+    }catch(e) {
+        console.error(e.message)
         res.status(404).json({
             success: false,
-            message: `post ${postId} not found`
+            message: `post ${req.params.id} not found`
         })
     }
 }

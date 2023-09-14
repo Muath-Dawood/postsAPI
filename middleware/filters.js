@@ -1,16 +1,22 @@
-const {newUsers: users} = require('../data')
+const User = require('../models/User')
 
-const usersFilter = (req, res, next) => {
-    const filters = Object.keys(req.query)
-    if(filters.length) {
-        req.filteredUsers = [...users]
-        for(let filter of filters) {
-            req.filteredUsers = req.filteredUsers.filter(user => user[filter].toLowerCase().startsWith(req.query[filter].toLowerCase()))
+const usersFilter = async (req, res, next) => {
+    try {
+        const users = await User.find(req.query)
+        if(users.length) {
+            req.users = users
+        }else {
+            res.status(404).json({
+                status: false,
+                message: "Sorry, No users found!"
+            })
         }
         next()
-    }else {
-        next()
+    }catch(e) {
+        res.status(500).json({
+            success: false,
+            message: "Sorry, something went wrong!"
+        })
     }
 }
-
-module.exports = {usersFilter}
+module.exports = usersFilter
